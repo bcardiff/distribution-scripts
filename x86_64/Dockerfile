@@ -45,11 +45,10 @@ RUN git clone https://github.com/crystal-lang/crystal \
  && bin/crystal build src/compiler/crystal.cr -D without_openssl -D without_zlib \
                       --cross-compile --target "x86_64-linux-musl" -o /crystal-musl
 
-FROM alpine:3.6
+FROM alpine:3.7
 
 # Install dependencies
-RUN apk upgrade --update \
- && apk add --update \
+RUN apk add --update \
       # Statically-compiled llvm
       llvm4-dev llvm4-static \
       # Static zlib, libyaml, and pcre
