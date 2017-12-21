@@ -31,7 +31,7 @@ RPM_NAME = crystal-$(CRYSTAL_VERSION)-$(PACKAGE_ITERATION).x86_64.rpm
 
 DOCKER_BUILD_ARGS = $(if $(no_cache),--no-cache )$(if $(pull_images),--pull )
 DEPS_BUILD_ARGS = $(DOCKER_BUILD_ARGS) --build-arg gc_version=$(GC_VERSION) --build-arg libatomic_ops_version=$(LIBATOMIC_OPS_VERSION) --build-arg libevent_version=$(LIBEVENT_VERSION) --build-arg aports_version=$(APORTS_VERSION) --build-arg packager_privkey_name=crystal@manas.tech-5a38080b.rsa
-BUILD_ARGS = $(DOCKER_BUILD_ARGS)$(if $(release),--build-arg release=true )--build-arg crystal_version=$(CRYSTAL_VERSION) --build-arg shards_version=$(SHARDS_VERSION) --build-arg gc_version=$(GC_VERSION) --build-arg libatomic_ops_version=$(LIBATOMIC_OPS_VERSION) --build-arg libevent_version=$(LIBEVENT_VERSION) --build-arg previous_crystal_release=$(PREVIOUS_CRYSTAL_RELEASE)
+BUILD_ARGS = $(DOCKER_BUILD_ARGS)$(if $(release),--build-arg release=true )--build-arg crystal_version=$(CRYSTAL_VERSION) --build-arg shards_version=$(SHARDS_VERSION) --build-arg previous_crystal_release=$(PREVIOUS_CRYSTAL_RELEASE)
 
 .PHONY: all
 all: compress package ## Build compressed omnibus and distribution packages [default]
