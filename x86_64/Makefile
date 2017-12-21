@@ -20,6 +20,7 @@ GC_VERSION = v7.4.6
 LIBATOMIC_OPS_VERSION = v7.4.8
 
 LIBEVENT_VERSION = release-2.1.8-stable
+APORTS_VERSION = v3.7.0
 
 OUTPUT_DIR = build
 OUTPUT_BASENAME = $(OUTPUT_DIR)/crystal-$(CRYSTAL_VERSION)-$(PACKAGE_ITERATION)-x86_64
@@ -29,6 +30,7 @@ DEB_NAME = crystal_$(CRYSTAL_VERSION)-$(PACKAGE_ITERATION)_amd64.deb
 RPM_NAME = crystal-$(CRYSTAL_VERSION)-$(PACKAGE_ITERATION).x86_64.rpm
 
 DOCKER_BUILD_ARGS = $(if $(no_cache),--no-cache )$(if $(pull_images),--pull )
+DEPS_BUILD_ARGS = $(DOCKER_BUILD_ARGS) --build-arg gc_version=$(GC_VERSION) --build-arg libatomic_ops_version=$(LIBATOMIC_OPS_VERSION) --build-arg libevent_version=$(LIBEVENT_VERSION) --build-arg aports_version=$(APORTS_VERSION) --build-arg packager_privkey_name=crystal@manas.tech-5a38080b.rsa
 BUILD_ARGS = $(DOCKER_BUILD_ARGS)$(if $(release),--build-arg release=true )--build-arg crystal_version=$(CRYSTAL_VERSION) --build-arg shards_version=$(SHARDS_VERSION) --build-arg gc_version=$(GC_VERSION) --build-arg libatomic_ops_version=$(LIBATOMIC_OPS_VERSION) --build-arg libevent_version=$(LIBEVENT_VERSION) --build-arg previous_crystal_release=$(PREVIOUS_CRYSTAL_RELEASE)
 
 .PHONY: all
@@ -102,6 +104,12 @@ $(OUTPUT_DIR)/$(RPM_NAME): docker-fpm $(OUTPUT_BASENAME).tar
            --depends gcc --depends pcre-devel --depends libevent-devel \
            --force --package $(OUTPUT_DIR)/$(RPM_NAME) \
            --prefix /usr --chdir /tmp/crystal/crystal-$(CRYSTAL_VERSION) bin lib share"
+
+.PHONY: deps
+deps:
+	docker build $(DEPS_BUILD_ARGS) -t crystal-deps -f Dockerfile-deps .
+	mkdir -p $(OUTPUT_DIR)/deps
+	docker run --rm -v $(CURDIR)/$(OUTPUT_DIR)/deps:/output crystal-deps /bin/sh -c "cp -r /deps/* /output/"
 
 .PHONY: clean
 clean: ## Clean up build directory

@@ -1,0 +1,104 @@
+FROM debian:8 AS debian
+
+RUN apt-get update \
+ && apt-get install -y build-essential automake libtool pkg-config git software-properties-common apt-transport-https curl \
+ && (pkg-config || true) \
+ # cleanup
+ && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ARG release
+ENV CFLAGS="-fPIC -pipe -O2"
+
+# Build libgc
+ARG gc_version
+ARG libatomic_ops_version
+RUN git clone https://github.com/ivmai/bdwgc \
+ && cd bdwgc \
+ && git checkout ${gc_version} \
+ && git clone https://github.com/ivmai/libatomic_ops \
+ && (cd libatomic_ops && git checkout ${libatomic_ops_version}) \
+ \
+ && ./autogen.sh \
+ && ./configure --disable-debug --disable-shared \
+ && make -j$(nproc)
+
+# Build libevent
+ARG libevent_version
+RUN git clone https://github.com/libevent/libevent \
+ && cd libevent \
+ && git checkout ${libevent_version} \
+ \
+ && ./autogen.sh \
+ && ./configure --disable-debug --disable-shared \
+ && make -j$(nproc)
+
+ENV LIBRARY_PATH=/bdwgc/.libs/:/libevent/.libs/
+
+FROM alpine:3.7
+
+RUN apk add --no-cache alpine-sdk build-base coreutils git \
+  chrpath cmake file paxmark python2 py-setuptools texinfo binutils-dev
+
+ARG release
+ENV CFLAGS="-fPIC -pipe -O2"
+
+RUN adduser -G abuild -g "Alpine Package Builder" -s /bin/sh -D builder \
+ && echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+ && mkdir -p /deps/debian \
+ && mkdir -p /deps/alpine \
+ && chown -R builder:abuild /deps
+
+USER builder
+WORKDIR /home/builder
+ENV REPODEST /deps/alpine
+
+ARG packager_privkey_name
+ENV PACKAGER "Crystal Team <crystal@manas.tech>"
+ENV PACKAGER_PRIVKEY /home/builder/.abuild/${packager_privkey_name}
+ADD files/abuild/* /home/builder/.abuild/
+
+RUN sudo chown -R builder:abuild /home/builder/.abuild \
+ && sudo cp /home/builder/.abuild/*.pub /etc/apk/keys/ \
+ && git clone https://github.com/alpinelinux/aports.git \
+ && cd aports && git checkout ${aports_version} \
+ && cd ~/aports/main/zlib && abuild \
+ && cd ~/aports/main/yaml && abuild \
+ && cd ~/aports/main/pcre && abuild \
+ \
+ && sudo apk add /deps/alpine/main/x86_64/zlib-dev-1.2.11-r1.apk \
+ && cd ~/aports/main/libffi && abuild -r \
+ && sudo apk add /deps/alpine/main/x86_64/libffi-dev-3.2.1-r4.apk \
+ && cd ~/aports/community/llvm4 && abuild
+
+RUN sudo apk add --no-cache automake libtool autoconf
+
+# Build libgc (again, this time for musl)
+ARG gc_version
+ARG libatomic_ops_version
+RUN git clone https://github.com/ivmai/bdwgc \
+ && cd bdwgc \
+ && git checkout ${gc_version} \
+ && git clone https://github.com/ivmai/libatomic_ops \
+ && (cd libatomic_ops && git checkout ${libatomic_ops_version}) \
+ \
+ && ./autogen.sh \
+ && ./configure --disable-debug --disable-shared \
+ && make -j$(nproc) CFLAGS=-DNO_GETCONTEXT
+
+# Build libevent
+ARG libevent_version
+RUN git clone https://github.com/libevent/libevent \
+ && cd libevent \
+ && git checkout ${libevent_version} \
+ \
+ && ./autogen.sh \
+ && ./configure --disable-debug --disable-shared \
+ && make -j$(nproc)
+
+RUN mkdir -p /deps/alpine/libs \
+ && cp ./bdwgc/.libs/*.a /deps/alpine/libs \
+ && cp ./libevent/.libs/*.a /deps/alpine/libs
+
+COPY --from=debian /bdwgc/.libs/*.a /deps/debian/
+COPY --from=debian /libevent/.libs/*.a /deps/debian/
+
