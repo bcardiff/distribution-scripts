@@ -1,12 +1,10 @@
-FROM debian:8 AS debian
+FROM debian:9 AS debian
 
 RUN apt-get update \
- && apt-get dist-upgrade -y \
  && apt-get install -y build-essential automake libtool pkg-config git software-properties-common apt-transport-https curl \
- \
  && (pkg-config || true)
 
-RUN add-apt-repository "deb http://apt.llvm.org/jessie/ llvm-toolchain-jessie-4.0 main" \
+RUN add-apt-repository "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-4.0 main" \
  && curl -sSL https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
  && apt-get update \
  && apt-get install -y llvm-4.0-dev
