@@ -40,7 +40,7 @@ RUN git clone https://github.com/ivmai/bdwgc \
 # Cross-compile crystal and build libcrystal.a
 ARG crystal_sha1
 ARG musl_target
-RUN git clone https://github.com/crystal-lang/crystal \
+RUN git clone https://github.com/bcardiff/crystal \
  && cd crystal \
  && git checkout ${crystal_sha1} \
  \
@@ -85,7 +85,7 @@ COPY --from=debian /crystal-musl.o /
 ARG crystal_version
 ARG crystal_sha1
 ARG gnu_target
-RUN git clone https://github.com/crystal-lang/crystal \
+RUN git clone https://github.com/bcardiff/crystal \
  && cd crystal \
  && git checkout ${crystal_sha1} \
  \

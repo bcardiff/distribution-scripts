@@ -5,7 +5,7 @@ RUN crystal --version
 
 ARG output_docs_base_name
 ARG crystal_sha1
-RUN git clone https://github.com/crystal-lang/crystal \
+RUN git clone https://github.com/bcardiff/crystal \
  && cd crystal \
  && git checkout ${crystal_sha1} \
  \

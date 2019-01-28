@@ -7,7 +7,7 @@ name "crystal"
 default_version CRYSTAL_VERSION
 
 if CRYSTAL_SRC.empty?
-  source git: "https://github.com/crystal-lang/crystal"
+  source git: "https://github.com/bcardiff/crystal"
 else
   source git: CRYSTAL_SRC
 end
