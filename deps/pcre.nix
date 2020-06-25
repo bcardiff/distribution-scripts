@@ -20,4 +20,9 @@ stdenv.mkDerivation {
     "--enable-unicode-properties"
     "--enable-utf8"
   ];
+
+  postInstall = ''
+    mv $out/lib/libpcre.a $out/
+    rm -rf $out/{bin,include,lib,share}
+  '';
 }
